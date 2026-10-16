@@ -1,0 +1,25 @@
+2026/10/06 11:43:02 controller: admin at http://<ip-เครื่องนี้>:8775/admin
+2026/10/06 11:43:02 agent Bankk-PC (Bankk-PC) started, controller http://127.0.0.1:8775
+2026/10/06 11:43:02 agent UI: http://localhost:9030
+2026/10/06 11:43:02 controller: new machine Bankk-PC (Bankk-PC) from 127.0.0.1 — ยังไม่จัดกลุ่ม
+2026/10/06 11:43:02 connected to controller
+2026/10/06 13:27:22 admin: share P1 created: Microsoft Print to PDF@Bankk-PC port 9031
+2026/10/06 13:27:33 admin: group created: IT
+2026/10/06 13:27:37 admin: share P1 updated (enabled=true allowed=[g1])
+2026/10/09 17:31:17 agent Bank-PC (Bankk-PC) started, controller http://server-7:8775, http://10.0.9.203:8775
+2026/10/09 17:31:17 agent UI: http://localhost:9030
+2026/10/09 17:31:19 controller: เชื่อมผ่าน http://10.0.9.203:8775
+2026/10/09 17:31:19 connected to controller
+2026/10/09 17:31:19 listening 127.0.0.1:9033 -> P3
+2026/10/09 17:31:19 virtual printer "Server-7 - ES5162 MFP(PCL6)": ไม่พบไดรเวอร์ "ES5162 MFP(PCL6)" ในเครื่องนี้ (ต้องติดตั้งไดรเวอร์ก่อน)
+2026/10/09 17:31:57 listening 127.0.0.1:9034 -> P4
+2026/10/09 17:31:58 virtual printer "Server-7 - ES5162LP MFP(PCL6)": ok
+2026/10/09 17:32:19 [P4] job 20261009T173219-d69681e548f3bfdc queued (16514 bytes)
+2026/10/09 17:32:21 job 20261009T173219-d69681e548f3bfdc submitted
+2026/10/09 17:33:26 controller: เชื่อมผ่าน http://server-7:8775
+2026/10/09 19:18:04 removed virtual printer "Server-7 - ES5162LP MFP(PCL6)"
+2026/10/09 19:19:54 listening 127.0.0.1:9035 -> P5
+2026/10/09 19:19:58 virtual printer "Server-7 - Brother HL-L3270CDW series": ok
+2026/10/09 19:20:19 removed virtual printer "Server-7 - Brother HL-L3270CDW series"
+2026/10/09 19:20:54 listening 127.0.0.1:9036 -> P6
+2026/10/09 19:20:58 virtual printer "Server-7 - Brother HL-L3270CDW series": ok

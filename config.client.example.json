@@ -1,0 +1,7 @@
+{
+  "server_url": "http://192.168.1.10:8775",
+  "token": "test-token-change-me",
+  "ui_port": 9030,
+  "data_dir": "data",
+  "job_ttl_minutes": 30
+}

@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="th">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Print Controller</title>
+<style>
+:root{--bg:#f3f5f8;--card:#fff;--line:#dde2ea;--ink:#1d2733;--mut:#6b7788;--ok:#0a8a2a;--bad:#c0392b;--warn:#b7791f;--acc:#1f6feb}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI",Tahoma,sans-serif;background:var(--bg);color:var(--ink);font-size:14px}
+header{background:#14202e;color:#fff;padding:10px 20px;display:flex;gap:24px;align-items:center;flex-wrap:wrap}
+header h1{font-size:17px;margin:0}
+.kpi{font-size:13px;color:#c9d4e2}.kpi b{color:#fff;font-size:15px}
+nav{display:flex;gap:2px;background:#1c2b3d;padding:0 12px;flex-wrap:wrap}
+nav a{color:#c9d4e2;padding:10px 16px;cursor:pointer}
+nav a.on{background:var(--bg);color:var(--ink);font-weight:600}
+main{padding:16px 20px;max-width:1300px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:6px;margin-bottom:14px}
+.hd{padding:10px 14px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.hd .grow{flex:1}
+table{border-collapse:collapse;width:100%;background:var(--card)}
+th,td{border-bottom:1px solid var(--line);padding:7px 12px;text-align:left;font-size:13px;vertical-align:top}
+th{background:#eef1f5;color:var(--mut);font-weight:600}
+.card table{border:0}
+.mut{color:var(--mut)}.ok{color:var(--ok);font-weight:600}.bad{color:var(--bad);font-weight:600}.warn{color:var(--warn);font-weight:600}
+.tag{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;background:#e8edf4}
+pre{background:#111;color:#ddd;padding:10px;font-size:12px;max-height:480px;overflow:auto;border-radius:6px}
+button{cursor:pointer;border:1px solid var(--line);background:#fff;border-radius:4px;padding:3px 10px;font-size:12px}
+button:hover{border-color:var(--acc);color:var(--acc)}
+input[type=text]{padding:5px 8px;border:1px solid var(--line);border-radius:4px}
+select{padding:3px 6px}
+label{margin-right:10px;white-space:nowrap}
+.tl{font-size:12px;color:var(--mut)}
+</style>
+<header>
+  <h1>🖨️ Print Controller</h1>
+  <span class="kpi">เครื่อง online <b id="k1">-</b></span>
+  <span class="kpi">งานรอพิมพ์ <b id="k2">-</b></span>
+  <span class="kpi">ปัญหา 24 ชม. <b id="k3">-</b></span>
+</header>
+<nav id="nav"></nav>
+<main>
+  <div id="gform" style="display:none;margin-bottom:12px">
+    <input type="text" id="gname" placeholder="ชื่อกลุ่มใหม่ เช่น ห้องยา OPD">
+    <button onclick="newGroup()">+ สร้างกลุ่ม</button>
+  </div>
+  <div id="view"></div>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clock=t=>t?new Date(t).toLocaleTimeString():'-';
+const TABS=[['machines','เครื่อง'],['groups','กลุ่ม'],['shares','เครื่องพิมพ์ที่แชร์'],['traffic','งานพิมพ์ / Traffic'],['log','Log']];
+const ST={pending:['รอพิมพ์','warn'],done:['สำเร็จ','ok'],error:['ผิดพลาด','bad'],rejected:['ถูกปฏิเสธ','bad'],cancelled:['ยกเลิก','mut'],expired:['หมดอายุ','bad']};
+let S=null,last='',tab=(location.hash||'#machines').slice(1),filter='all';
+if(!TABS.some(t=>t[0]===tab))tab='machines';
+
+async function api(path,body){
+  const r=await fetch('/admin/api/'+path,{method:'POST',headers:{'X-Requested-With':'admin','Content-Type':'application/json'},body:JSON.stringify(body||{})});
+  if(!r.ok)alert('ไม่สำเร็จ: '+await r.text());
+  await load(true);
+}
+function go(t){tab=t;location.hash=t;render();}
+function newGroup(){const n=$('gname').value.trim();if(!n)return;$('gname').value='';api('group/create',{name:n});}
+function setGroup(el){api('machine/group',{id:el.dataset.m,group:el.value});}
+function shareIt(el){api('share/create',{machine:el.dataset.m,printer:el.dataset.p});}
+function setAllowed(el){
+  const g=[...el.closest('td').querySelectorAll('input[type=checkbox]:checked')].map(x=>x.dataset.g);
+  api('share/update',{id:el.dataset.s,allowed:g});
+}
+function editShare(el){
+  const f=el.dataset.f,v=prompt(f==='name'?'ชื่อที่ผู้ใช้เห็นในเครื่องลูก':'ชื่อไดรเวอร์ที่เครื่องผู้ใช้ต้องมี',el.dataset.v);
+  if(v!==null)api('share/update',{id:el.dataset.s,[f]:v});
+}
+function renameGroup(el){const v=prompt('ชื่อกลุ่ม',el.dataset.n);if(v)api('group/rename',{id:el.dataset.g,name:v});}
+function setFilter(v){filter=v;render();}
+
+const views={
+machines(){
+  if(!S.machines.length)return '<p class="mut">ยังไม่มีเครื่องเชื่อมต่อ — ใส่ที่อยู่ตัวควบคุมใน config ของเครื่องลูก แล้วเปิด agent</p>';
+  return S.machines.map(m=>{
+    const gopts=['<option value="">(ยังไม่จัดกลุ่ม)</option>'].concat(S.groups.map(g=>`<option value="${esc(g.id)}"${g.id===m.group?' selected':''}>${esc(g.name)}</option>`)).join('');
+    const prs=(m.printers||[]).map(p=>{
+      const shared=S.shares.some(x=>x.host===m.id&&x.real===p.name);
+      return `<tr><td>${esc(p.name)}</td><td>${esc(p.driver)}</td><td>${esc(p.port)}</td>
+        <td class="${p.status==='Normal'?'ok':'warn'}">${esc(p.status)}${p.jobs?` · คิว ${p.jobs}`:''}</td>
+        <td>${shared?'<span class="mut">แชร์แล้ว</span>':`<button data-m="${esc(m.id)}" data-p="${esc(p.name)}" onclick="shareIt(this)">แชร์</button>`}</td></tr>`;
+    }).join('')||'<tr><td colspan="5" class="mut">ไม่พบเครื่องพิมพ์ในเครื่องนี้</td></tr>';
+    const vs=Object.entries(m.virtuals||{}).map(([id,st])=>{
+      const sh=S.shares.find(x=>x.id===id);
+      return `<div>${st==='ok'?'✅':'⚠️'} ${esc(sh?sh.name:id)} — <span class="${st==='ok'?'ok':'bad'}">${st==='ok'?'พร้อมใช้':esc(st)}</span></div>`;
+    }).join('');
+    return `<div class="card">
+      <div class="hd"><b>${esc(m.hostname||m.id)}</b><span class="mut">${esc(m.id)} · ${esc(m.ip)}</span>
+        <span class="${m.online?'ok':'bad'}">${m.online?'● online':'● offline'}</span>
+        ${m.online?'':`<span class="mut">เห็นล่าสุด ${clock(m.last_seen)}</span>`}
+        <span class="grow"></span>
+        กลุ่ม <select data-m="${esc(m.id)}" onchange="setGroup(this)">${gopts}</select>
+        ${m.online?'':`<button onclick="if(confirm('ลบเครื่องนี้ออกจากระบบ?'))api('machine/delete',{id:'${esc(m.id)}'})">ลบ</button>`}
+      </div>
+      <table><tr><th>เครื่องพิมพ์ในเครื่องนี้</th><th>ไดรเวอร์</th><th>พอร์ต</th><th>สถานะ</th><th></th></tr>${prs}</table>
+      ${vs?`<div style="padding:8px 14px"><div class="mut" style="margin-bottom:4px">เครื่องพิมพ์ที่เครื่องนี้ใช้ได้</div>${vs}</div>`:''}
+      ${!m.group?'<div class="warn" style="padding:8px 14px">⚠ ยังไม่อยู่ในกลุ่ม — ยังใช้/แชร์เครื่องพิมพ์ไม่ได้</div>':''}
+    </div>`;
+  }).join('');
+},
+groups(){
+  const cnt=g=>S.machines.filter(m=>m.group===g).length;
+  const un=S.machines.filter(m=>!m.group).length;
+  return `<table><tr><th>กลุ่ม</th><th>จำนวนเครื่อง</th><th>เครื่องพิมพ์ที่ใช้ได้</th><th></th></tr>`+
+    S.groups.map(g=>`<tr><td><b>${esc(g.name)}</b></td><td>${cnt(g.id)}</td>
+      <td>${esc(S.shares.filter(x=>x.allowed.includes(g.id)).map(x=>x.name).join(', ')||'-')}</td>
+      <td><button data-g="${esc(g.id)}" data-n="${esc(g.name)}" onclick="renameGroup(this)">เปลี่ยนชื่อ</button>
+          <button onclick="if(confirm('ลบกลุ่ม?'))api('group/delete',{id:'${esc(g.id)}'})">ลบ</button></td></tr>`).join('')+
+    `<tr><td class="mut">(ยังไม่จัดกลุ่ม)</td><td>${un}</td><td class="mut">ใช้/แชร์ไม่ได้</td><td></td></tr></table>`;
+},
+shares(){
+  if(!S.shares.length)return '<p class="mut">ยังไม่มีเครื่องพิมพ์ที่แชร์ — ไปแท็บ "เครื่อง" แล้วกดแชร์ที่เครื่องพิมพ์</p>';
+  return `<table><tr><th>ชื่อที่ผู้ใช้เห็น</th><th>เครื่องโฮสต์</th><th>เครื่องพิมพ์จริง</th><th>ไดรเวอร์ที่ผู้ใช้ต้องมี</th><th>กลุ่มที่ใช้ได้</th><th>เปิดใช้</th><th></th></tr>`+
+  S.shares.map(sh=>`<tr>
+    <td>${esc(sh.name)} <button data-s="${esc(sh.id)}" data-f="name" data-v="${esc(sh.name)}" onclick="editShare(this)">แก้</button></td>
+    <td>${esc(sh.host)} <span class="${sh.host_online?'ok':'bad'}">${sh.host_online?'●':'○ offline'}</span></td>
+    <td>${esc(sh.real)}<br><span class="${sh.health==='Normal'?'ok':'warn'}">${esc(sh.health)}</span></td>
+    <td>${esc(sh.driver||'(ยังไม่ระบุ)')} <button data-s="${esc(sh.id)}" data-f="driver" data-v="${esc(sh.driver)}" onclick="editShare(this)">แก้</button></td>
+    <td>${S.groups.map(g=>`<label><input type="checkbox" data-g="${esc(g.id)}" data-s="${esc(sh.id)}" ${sh.allowed.includes(g.id)?'checked':''} onchange="setAllowed(this)">${esc(g.name)}</label>`).join('')||'<span class="mut">ยังไม่มีกลุ่ม</span>'}</td>
+    <td><input type="checkbox" data-s="${esc(sh.id)}" ${sh.enabled?'checked':''} onchange="api('share/update',{id:this.dataset.s,enabled:this.checked})"></td>
+    <td><button onclick="if(confirm('ยกเลิกการแชร์? งานที่รออยู่จะถูกยกเลิก'))api('share/delete',{id:'${esc(sh.id)}'})">ยกเลิกแชร์</button></td></tr>`).join('')+'</table>';
+},
+traffic(){
+  const bad=j=>['error','rejected','expired'].includes(j.status);
+  let jobs=S.jobs.filter(j=>filter==='all'||(filter==='bad'&&bad(j))||(filter==='pending'&&j.status==='pending'));
+  const tl=j=>{let t=`รับเข้า ${clock(j.created)}`;if(j.sent)t+=` → ส่งให้โฮสต์ ${clock(j.sent)}`;
+    if(j.done)t+=` → ${j.status==='done'?'เสร็จ':'ผิดพลาด'} ${clock(j.done)} (${Math.round((new Date(j.done)-new Date(j.created))/1000)} วินาที)`;
+    if(j.attempts>1)t+=` · ส่งให้โฮสต์ ${j.attempts} ครั้ง`;return t;};
+  return `<div style="margin-bottom:8px">แสดง <select onchange="setFilter(this.value)">
+      <option value="all"${filter==='all'?' selected':''}>ทั้งหมด</option>
+      <option value="bad"${filter==='bad'?' selected':''}>มีปัญหา</option>
+      <option value="pending"${filter==='pending'?' selected':''}>รอพิมพ์</option></select>
+      <span class="mut">· งานรอเกิน ${S.ttl} นาทีจะถูกยกเลิกเอง · เนื้อหาสลากไม่ถูกเก็บหลังพิมพ์เสร็จ</span></div>`+
+  `<table><tr><th>เวลา</th><th>จาก</th><th>เครื่องพิมพ์</th><th>โฮสต์</th><th>ขนาด</th><th>สถานะ</th><th>รายละเอียด</th><th></th></tr>`+
+  (jobs.map(j=>{const [lb,cl]=ST[j.status]||[j.status,''];return `<tr><td>${clock(j.created)}</td><td>${esc(j.from)}</td><td>${esc(j.printer_name)}</td><td>${esc(j.host||'-')}</td>
+    <td>${(j.size/1024).toFixed(1)} KB</td><td class="${cl}">${lb}</td>
+    <td>${esc(j.error||j.hint||'')}<div class="tl">${tl(j)}</div></td>
+    <td>${j.status==='error'?`<button onclick="api('job/retry',{id:'${esc(j.id)}'})">พิมพ์ใหม่</button>`:''}
+        ${j.status==='pending'?`<button onclick="api('job/cancel',{id:'${esc(j.id)}'})">ยกเลิก</button>`:''}</td></tr>`}).join('')||'<tr><td colspan="8" class="mut">ไม่มีงาน</td></tr>')+'</table>';
+},
+log(){return '<pre>'+esc(S.log.join('\n'))+'</pre>';}
+};
+
+function render(){
+  if(!S)return;
+  $('k1').textContent=`${S.summary.online}/${S.summary.machines}`;
+  $('k2').textContent=S.summary.pending;
+  $('k3').textContent=S.summary.problems;
+  $('k3').style.color=S.summary.problems?'#ff8a7a':'#fff';
+  $('nav').innerHTML=TABS.map(([k,l])=>`<a class="${k===tab?'on':''}" onclick="go('${k}')">${l}</a>`).join('');
+  $('gform').style.display=tab==='groups'?'block':'none';
+  $('view').innerHTML=views[tab]();
+}
+async function load(force){
+  let r;try{r=await fetch('/admin/api/state');}catch(e){return;}
+  if(!r.ok)return;
+  const t=await r.text();
+  // ไม่นับ last_seen ในการเทียบ เพื่อไม่ให้หน้ารีเฟรชทุก 3 วินาที (dropdown ที่เปิดอยู่จะไม่ถูกปิด)
+  const key=JSON.stringify(JSON.parse(t),(k,v)=>k==='last_seen'?undefined:v);
+  if(!force&&key===last)return;
+  last=key;S=JSON.parse(t);render();
+}
+load(true);setInterval(load,3000);
+</script>
+</html>

@@ -1,0 +1,164 @@
+{
+  "groups": [
+    {
+      "id": "g1",
+      "name": "IT"
+    }
+  ],
+  "machines": {
+    "Bankk-PC": {
+      "id": "Bankk-PC",
+      "hostname": "Bankk-PC",
+      "ip": "127.0.0.1",
+      "group": "",
+      "printers": [
+        {
+          "name": "Snagit 12",
+          "driver": "Snagit 12 Printer",
+          "port": "C:\\ProgramData\\TechSmith\\Snagit 12\\PrinterPortFile",
+          "status": "Normal",
+          "jobs": 0
+        },
+        {
+          "name": "OneNote (Desktop) - Protected",
+          "driver": "Microsoft Virtual Print Class Driver",
+          "port": "Microsoft.Office.OneNoteVirtualPrinter_8wekyb3d8bbwe_onenote-psa:print-to-onenote_S-1-5-21-2419564718-4258422921-812794058-1001",
+          "status": "Normal",
+          "jobs": 0
+        },
+        {
+          "name": "RustDesk Printer",
+          "driver": "RustDesk v4 Printer Driver",
+          "port": "RustDesk Printer",
+          "status": "Normal",
+          "jobs": 0
+        },
+        {
+          "name": "Print to Evernote",
+          "driver": "Print to Evernote Driver",
+          "port": "FOXIT_Evernote:",
+          "status": "Normal",
+          "jobs": 0
+        },
+        {
+          "name": "OneNote (Desktop)",
+          "driver": "Send to Microsoft OneNote 16 Driver",
+          "port": "nul:",
+          "status": "Normal",
+          "jobs": 0
+        },
+        {
+          "name": "Microsoft Print to PDF",
+          "driver": "Microsoft Print To PDF",
+          "port": "PORTPROMPT:",
+          "status": "Normal",
+          "jobs": 0
+        },
+        {
+          "name": "HP LaserJet Professional P1102 (Copy 1)",
+          "driver": "HP LaserJet Professional P1102",
+          "port": "USB004",
+          "status": "Normal",
+          "jobs": 0
+        },
+        {
+          "name": "HP LaserJet Professional P1102",
+          "driver": "HP LaserJet Professional P1102",
+          "port": "USB001",
+          "status": "Normal",
+          "jobs": 1
+        },
+        {
+          "name": "Foxit PDF Editor Printer",
+          "driver": "Foxit PDF Editor Printer Driver",
+          "port": "FOXIT_PDF:",
+          "status": "Normal",
+          "jobs": 0
+        },
+        {
+          "name": "Brother QL-800",
+          "driver": "Brother QL-800",
+          "port": "USB002",
+          "status": "Normal",
+          "jobs": 0
+        },
+        {
+          "name": "Adobe PDF",
+          "driver": "Adobe PDF Converter",
+          "port": "Documents\\*.pdf",
+          "status": "Normal",
+          "jobs": 0
+        },
+        {
+          "name": "\\\\10.0.2.94\\OKI Universal PCL 5",
+          "driver": "OKI Universal PCL 5",
+          "port": "USB001",
+          "status": "Normal",
+          "jobs": 0
+        },
+        {
+          "name": "\\\\10.0.3.248\\HP DeskJet 2700 series",
+          "driver": "HP DJ 2700 series PCL-3",
+          "port": "USB001",
+          "status": "Error",
+          "jobs": 8
+        },
+        {
+          "name": "\\\\10.0.3.248\\ZDesigner ZD230-203dpi ZPL",
+          "driver": "ZDesigner ZD230-203dpi ZPL",
+          "port": "USB002",
+          "status": "Normal",
+          "jobs": 0
+        },
+        {
+          "name": "\\\\10.0.9.203\\ES5162LP MFP(PCL6)",
+          "driver": "ES5162LP MFP(PCL6)",
+          "port": "USB007",
+          "status": "Normal",
+          "jobs": 0
+        },
+        {
+          "name": "\\\\10.0.9.203\\Brother HL-L3270CDW series",
+          "driver": "Brother HL-L3270CDW series",
+          "port": "USB006",
+          "status": "Normal",
+          "jobs": 0
+        },
+        {
+          "name": "\\\\10.0.9.203\\EPSON L18050 Series",
+          "driver": "EPSON L18050 Series",
+          "port": "USB005",
+          "status": "Normal",
+          "jobs": 0
+        },
+        {
+          "name": "\\\\10.0.9.99\\HP LaserJet Professional P1102",
+          "driver": "HP LaserJet Professional P1102",
+          "port": "USB001",
+          "status": "Normal",
+          "jobs": 0
+        }
+      ],
+      "virtuals": {},
+      "last_seen": "2026-10-09T11:33:43.2447015+07:00"
+    }
+  },
+  "shares": [
+    {
+      "id": "P1",
+      "name": "Bankk-PC - Microsoft Print to PDF",
+      "host": "Bankk-PC",
+      "real": "Microsoft Print to PDF",
+      "driver": "Microsoft Print To PDF",
+      "port": 9031,
+      "allowed": [
+        "g1"
+      ],
+      "enabled": true
+    }
+  ],
+  "jobs": [],
+  "next_port": 9031,
+  "next_share": 1,
+  "next_group": 1
+}

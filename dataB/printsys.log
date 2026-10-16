@@ -1,0 +1,56 @@
+2026/10/09 11:37:15 agent TEST-B (Bankk-PC) started, controller http://127.0.0.1:8775
+2026/10/09 11:37:15 agent UI: http://localhost:9029
+2026/10/09 11:37:15 connected to controller
+2026/10/09 11:38:09 controller error: Post "http://127.0.0.1:8775/api/agent/sync": dial tcp 127.0.0.1:8775: connectex: No connection could be made because the target machine actively refused it.
+2026/10/09 11:38:14 connected to controller
+2026/10/09 11:38:29 listening 127.0.0.1:9031 -> P1
+2026/10/09 11:38:31 virtual printer "Bankk-PC - Microsoft Print to PDF": ok
+2026/10/09 12:07:42 agent TEST-B (Bankk-PC) started, controller http://127.0.0.1:8775
+2026/10/09 12:07:42 agent UI: http://localhost:9029
+2026/10/09 12:07:42 listen tcp 127.0.0.1:9029: bind: Only one usage of each socket address (protocol/network address/port) is normally permitted.
+2026/10/09 12:08:04 [P1] job 20261009T120804-f31dec5d745e60d0 queued (238980 bytes)
+2026/10/09 12:08:06 job 20261009T120804-f31dec5d745e60d0 submitted
+2026/10/09 12:15:21 controller error: Post "http://127.0.0.1:8775/api/agent/sync": dial tcp 127.0.0.1:8775: connectex: No connection could be made because the target machine actively refused it.
+2026/10/09 12:17:58 agent TEST-B (Bankk-PC) started, controller http://127.0.0.1:8775
+2026/10/09 12:17:58 agent UI: http://localhost:9029
+2026/10/09 12:17:58 controller error: Post "http://127.0.0.1:8775/api/agent/sync": dial tcp 127.0.0.1:8775: connectex: No connection could be made because the target machine actively refused it.
+2026/10/09 12:18:30 agent Bank-PC (Bankk-PC) started, controller http://10.0.9.203:8775
+2026/10/09 12:18:30 agent UI: http://localhost:9029
+2026/10/09 12:19:00 controller error: Post "http://10.0.9.203:8775/api/agent/sync": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+2026/10/09 12:19:07 connected to controller
+2026/10/09 12:19:08 removed virtual printer "Bankk-PC - Microsoft Print to PDF"
+2026/10/09 12:21:10 listening 127.0.0.1:9032 -> P2
+2026/10/09 12:21:14 virtual printer "Server-7 - Brother HL-L3270CDW series": ok
+2026/10/09 12:21:29 [P2] job 20261009T122129-f5bf4dea36da7917 queued (72246 bytes)
+2026/10/09 12:21:30 job 20261009T122129-f5bf4dea36da7917 submitted
+2026/10/09 15:36:27 agent Bank-PC (Bankk-PC) started, controller http://10.0.9.203:8775
+2026/10/09 15:36:27 agent UI: http://localhost:9029
+2026/10/09 15:36:27 connected to controller
+2026/10/09 15:36:27 listening 127.0.0.1:9032 -> P2
+2026/10/09 15:36:28 virtual printer "Server-7 - Brother HL-L3270CDW series": ok
+2026/10/09 15:47:34 agent Bank-PC (Bankk-PC) started, controller http://10.0.9.203:8775
+2026/10/09 15:47:34 agent UI: http://localhost:9029
+2026/10/09 15:47:34 connected to controller
+2026/10/09 15:47:34 listening 127.0.0.1:9032 -> P2
+2026/10/09 15:47:35 virtual printer "Server-7 - Brother HL-L3270CDW series": ok
+2026/10/09 15:48:31 [P2] job 20261009T154831-7de22d536b000288 queued (1636533 bytes)
+2026/10/09 15:48:32 job 20261009T154831-7de22d536b000288 submitted
+2026/10/09 17:11:27 agent Bank-PC (Bankk-PC) started, controller http://127.0.0.1:9029, http://127.0.0.1:8775
+2026/10/09 17:11:27 agent UI: http://localhost:9029
+2026/10/09 17:11:27 controller error: ทุกที่อยู่ใช้ไม่ได้: http://127.0.0.1:9029/api/agent/sync: HTTP 403 | Post "http://127.0.0.1:8775/api/agent/sync": dial tcp 127.0.0.1:8775: connectex: No connection could be made because the target machine actively refused it.
+2026/10/09 17:12:34 agent Bank-PC (Bankk-PC) started, controller http://127.0.0.1:9029, http://10.0.9.203:8775
+2026/10/09 17:12:34 agent UI: http://localhost:9029
+2026/10/09 17:12:34 controller: เชื่อมผ่าน http://10.0.9.203:8775
+2026/10/09 17:12:34 connected to controller
+2026/10/09 17:12:35 removed virtual printer "Server-7 - Brother HL-L3270CDW series"
+2026/10/09 17:14:55 agent Bank-PC (Bankk-PC) started, controller http://10.0.9.203:8775
+2026/10/09 17:14:55 agent UI: http://localhost:9029
+2026/10/09 17:14:55 controller: เชื่อมผ่าน http://10.0.9.203:8775
+2026/10/09 17:14:55 connected to controller
+2026/10/09 17:15:13 agent Bank-PC (Bankk-PC) started, controller http://10.0.9.203:8775
+2026/10/09 17:15:13 agent UI: http://localhost:9029
+2026/10/09 17:15:13 controller: เชื่อมผ่าน http://10.0.9.203:8775
+2026/10/09 17:15:13 connected to controller
+2026/10/09 17:20:53 agent Bank-PC (Bankk-PC) started, controller http://10.0.9.203:8775
+2026/10/09 17:20:53 agent UI: http://localhost:9029
+2026/10/09 17:20:53 listen tcp 127.0.0.1:9029: bind: Only one usage of each socket address (protocol/network address/port) is normally permitted.

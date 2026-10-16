@@ -1,0 +1,11 @@
+{
+  "agent_id": "Bank-PC",
+  "server_url": [
+    "http://server-7:8775",
+    "http://10.0.9.203:8775"
+  ],
+  "token": "yunatokenisonetwothreenaja",
+  "auto_connect": true,
+  "ui_port": 9030,
+  "data_dir": "data"
+}

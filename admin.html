@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="th">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Print Controller</title>
+<style>
+:root{
+  --bg:#f6f3ea;      /* กระดาษวาชิ */
+  --card:#fffdf8;
+  --line:#e4dfcf;
+  --ink:#2d3b45;     /* น้ำเงินเข้มอมเทา */
+  --mut:#7d8a8c;
+  --blue:#4a7ca0;  --blue-l:#e6eff5;   /* ฟ้าคราม */
+  --green:#6c9a6a; --green-d:#4f7e4d; --green-l:#e8f0e3;  /* เขียวมัทฉะ */
+  --yellow:#d9a93a; --yellow-d:#9a7412; --yellow-l:#fbf2d6; /* เหลืองดอกเรพ */
+  --bad:#b4573f; --bad-l:#f6e3dc;      /* ดินเผา ใช้เฉพาะสถานะผิดพลาด */
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Leelawadee UI","Segoe UI","Noto Sans Thai",Tahoma,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.55}
+header{padding:18px 28px 12px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+header h1{font-size:18px;font-weight:600;margin:0;letter-spacing:.2px}
+header small{color:var(--mut)}
+.stripe{height:4px;background:linear-gradient(90deg,var(--blue) 0 34%,var(--green) 34% 67%,var(--yellow) 67% 100%)}
+nav{display:flex;gap:4px;padding:0 22px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+nav a{padding:11px 14px;cursor:pointer;color:var(--mut);border-bottom:2px solid transparent;margin-bottom:-1px}
+nav a:hover{color:var(--ink)}
+nav a.on{color:var(--ink);font-weight:600;border-bottom-color:var(--green)}
+main{padding:22px 28px 40px;max-width:1280px}
+.mut{color:var(--mut)}.ok{color:var(--green-d);font-weight:600}.warn{color:var(--yellow-d);font-weight:600}.bad{color:var(--bad);font-weight:600}
+.card,.panel,.tbl{background:var(--card);border:1px solid var(--line);border-radius:12px}
+.card{margin-bottom:14px;overflow:hidden}
+.hd{padding:11px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--line);background:#fbf9f1}
+.hd .grow{flex:1}
+.tbl{overflow:auto}
+table{border-collapse:collapse;width:100%}
+th,td{border-bottom:1px solid var(--line);padding:8px 14px;text-align:left;font-size:13px;vertical-align:top}
+th{color:var(--mut);font-weight:600;font-size:12px;background:#fbf9f1}
+tr:last-child td{border-bottom:0}
+.card table{border:0}
+button{font:inherit;font-size:12px;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:3px 12px}
+button:hover{border-color:var(--green);color:var(--green-d)}
+input[type=text],select{font:inherit;font-size:13px;padding:4px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+label{margin-right:12px;white-space:nowrap}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:18px}
+.k{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--blue);border-radius:12px;padding:14px 16px}
+.k.g{border-top-color:var(--green)}.k.y{border-top-color:var(--yellow)}
+.k .lbl{color:var(--mut);font-size:12px}
+.k .num{font-size:32px;font-weight:600;line-height:1.2;margin:2px 0}
+.k .sub{color:var(--mut);font-size:12px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px;margin-bottom:16px}
+.panel{padding:14px 16px}
+.panel h3{font-size:12px;color:var(--mut);font-weight:600;margin:0 0 10px;letter-spacing:.3px}
+.att{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.att:last-child{border-bottom:0}
+.dot{flex:none;width:9px;height:9px;border-radius:50%;margin-top:6px;background:var(--green)}
+.dot.y{background:var(--yellow)}.dot.r{background:var(--bad)}
+.note{border:1px solid var(--bad);background:var(--bad-l);border-radius:10px;padding:9px 14px;margin-bottom:12px;color:var(--bad);font-weight:600}
+.tl{font-size:12px;color:var(--mut)}
+.chip{display:inline-block;padding:1px 10px;border-radius:999px;font-size:12px;background:var(--blue-l);color:var(--blue)}
+pre{background:#27333b;color:#e9e6da;padding:12px;font-size:12px;max-height:520px;overflow:auto;border-radius:12px}
+</style>
+<header>
+  <h1>Print Controller</h1>
+  <small>ระบบกลางจัดการเครื่องพิมพ์</small>
+</header>
+<div class="stripe"></div>
+<nav id="nav"></nav>
+<main>
+  <div id="alert"></div>
+  <div id="gform" style="display:none;margin-bottom:14px">
+    <input type="text" id="gname" placeholder="ชื่อกลุ่มใหม่ เช่น ห้องยา OPD">
+    <button onclick="newGroup()">+ สร้างกลุ่ม</button>
+  </div>
+  <div id="view"></div>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clock=t=>t?new Date(t).toLocaleTimeString():'-';
+const TABS=[['dash','ภาพรวม'],['machines','เครื่อง'],['groups','กลุ่ม'],['shares','เครื่องพิมพ์ที่แชร์'],['traffic','งานพิมพ์ / Traffic'],['log','Log']];
+const ST={pending:['รอพิมพ์','warn'],done:['สำเร็จ','ok'],error:['ผิดพลาด','bad'],rejected:['ถูกปฏิเสธ','bad'],cancelled:['ยกเลิก','mut'],expired:['หมดอายุ','bad']};
+let S=null,last='',tab=(location.hash||'#dash').slice(1),filter='all',showAll=false;
+if(!TABS.some(t=>t[0]===tab))tab='dash';
+
+// เครื่องพิมพ์ที่ "ต่อ USB อยู่" ดูจากชื่อพอร์ต (USB001, DOT4_001) และสถานะที่ Windows รายงานว่าไม่ออฟไลน์
+const isUSB=p=>/^(USB|DOT4)/i.test(p.port||'');
+const isUp=p=>!['Offline','NotAvailable'].includes(p.status);
+
+async function api(path,body){
+  const r=await fetch('/admin/api/'+path,{method:'POST',headers:{'X-Requested-With':'admin','Content-Type':'application/json'},body:JSON.stringify(body||{})});
+  if(!r.ok)alert('ไม่สำเร็จ: '+await r.text());
+  await load(true);
+}
+function go(t){tab=t;location.hash=t;render();}
+function newGroup(){const n=$('gname').value.trim();if(!n)return;$('gname').value='';api('group/create',{name:n});}
+function setGroup(el){api('machine/group',{id:el.dataset.m,group:el.value});}
+function shareIt(el){api('share/create',{machine:el.dataset.m,printer:el.dataset.p});}
+function setAllowed(el){
+  const g=[...el.closest('td').querySelectorAll('input[type=checkbox]:checked')].map(x=>x.dataset.g);
+  api('share/update',{id:el.dataset.s,allowed:g});
+}
+function editShare(el){
+  const f=el.dataset.f,v=prompt(f==='name'?'ชื่อที่ผู้ใช้เห็นในเครื่องลูก':'ชื่อไดรเวอร์ที่เครื่องผู้ใช้ต้องมี',el.dataset.v);
+  if(v!==null)api('share/update',{id:el.dataset.s,[f]:v});
+}
+function renameGroup(el){const v=prompt('ชื่อกลุ่ม',el.dataset.n);if(v)api('group/rename',{id:el.dataset.g,name:v});}
+function setFilter(v){filter=v;render();}
+function setShowAll(v){showAll=v;render();}
+
+const views={
+dash(){
+  const M=S.machines,on=M.filter(m=>m.online),off=M.length-on.length;
+  const usbNow=on.flatMap(m=>(m.printers||[]).filter(p=>isUSB(p)&&isUp(p)).map(p=>({m,p})));
+  const usbHosts=new Set(usbNow.map(x=>x.m.id)).size;
+  const enabled=S.shares.filter(x=>x.enabled).length;
+  const unassigned=M.filter(m=>!m.group).length;
+  const st=S.stats||{total24:0,done24:0,hourly:new Array(24).fill(0)};
+  const prob=S.summary.problems;
+
+  const att=[];
+  M.filter(m=>m.dup).forEach(m=>att.push(['r',m.dup]));
+  S.shares.filter(x=>!x.host_online).forEach(x=>att.push(['r',`เครื่องโฮสต์ ${x.host} ออฟไลน์ — "${x.name}" ใช้งานไม่ได้`]));
+  S.shares.filter(x=>x.host_online&&x.health!=='Normal').forEach(x=>att.push(['y',`"${x.name}": สถานะเครื่องพิมพ์ ${x.health}`]));
+  M.forEach(m=>Object.entries(m.virtuals||{}).forEach(([id,s])=>{
+    if(s!=='ok'){const sh=S.shares.find(z=>z.id===id);att.push(['y',`${m.hostname||m.id}: "${sh?sh.name:id}" — ${s}`]);}}));
+  if(unassigned)att.push(['y',`${unassigned} เครื่องยังไม่ได้จัดกลุ่ม`]);
+  if(off)att.push(['y',`${off} เครื่องออฟไลน์: ${M.filter(m=>!m.online).slice(0,5).map(m=>m.hostname||m.id).join(', ')}${off>5?' …':''}`]);
+  if(prob)att.push(['r',`มีงานพิมพ์ที่มีปัญหา ${prob} งานใน 24 ชั่วโมง`,'traffic']);
+
+  const hr=st.hourly||[],mx=Math.max(1,...hr);
+  const bars=hr.map((v,i)=>{const h=Math.round(v/mx*58);
+    return `<rect x="${i*20+4}" y="${66-h}" width="12" height="${Math.max(h,v?2:1)}" rx="2" style="fill:${v?'var(--green)':'var(--line)'}"><title>${v} งาน</title></rect>`;}).join('');
+  const lbl=hr.map((v,i)=>i%6===0?`<text x="${i*20+4}" y="86" font-size="10" style="fill:var(--mut)">${String(new Date(Date.now()-(23-i)*3600e3).getHours()).padStart(2,'0')}:00</text>`:'').join('');
+
+  const grp=S.groups.map(g=>{const ms=M.filter(m=>m.group===g.id);
+    return `<tr><td>${esc(g.name)}</td><td>${ms.filter(m=>m.online).length}/${ms.length}</td><td>${S.shares.filter(x=>x.allowed.includes(g.id)).length}</td></tr>`;}).join('')
+    +`<tr><td class="mut">(ยังไม่จัดกลุ่ม)</td><td>${M.filter(m=>!m.group&&m.online).length}/${unassigned}</td><td class="mut">-</td></tr>`;
+
+  return `<div class="grid">
+    <div class="k"><div class="lbl">เครื่องที่มี agent</div><div class="num">${M.length}</div>
+      <div class="sub"><span class="ok">online ${on.length}</span> · offline ${off}</div></div>
+    <div class="k g"><div class="lbl">เครื่องพิมพ์ USB ที่ต่ออยู่</div><div class="num">${usbNow.length}</div>
+      <div class="sub">บน ${usbHosts} เครื่อง (เฉพาะเครื่องที่ online)</div></div>
+    <div class="k g"><div class="lbl">เครื่องพิมพ์ที่แชร์</div><div class="num">${S.shares.length}</div>
+      <div class="sub">เปิดใช้ ${enabled} · ปิด ${S.shares.length-enabled}</div></div>
+    <div class="k y"><div class="lbl">งานพิมพ์ใน 24 ชั่วโมง</div><div class="num">${st.total24}</div>
+      <div class="sub"><span class="ok">สำเร็จ ${st.done24}</span> · <span class="${prob?'bad':'mut'}">ปัญหา ${prob}</span></div></div>
+    <div class="k y"><div class="lbl">งานรอพิมพ์</div><div class="num">${S.summary.pending}</div><div class="sub">หมดอายุเองใน ${S.ttl} นาที</div></div>
+  </div>
+  <div class="two">
+    <div class="panel"><h3>ต้องดูแล</h3>${att.length?att.map(([c,t,to])=>`<div class="att"><i class="dot ${c}"></i><span>${esc(t)}${to?` <button onclick="filter='bad';go('${to}')">ดู</button>`:''}</span></div>`).join('')
+      :'<div class="att"><i class="dot"></i><span>ทุกอย่างเรียบร้อย</span></div>'}</div>
+    <div class="panel"><h3>งานพิมพ์ 24 ชั่วโมงที่ผ่านมา (รายชั่วโมง)</h3>
+      <svg viewBox="0 0 488 92" width="100%" role="img" aria-label="กราฟงานพิมพ์รายชั่วโมง">${bars}${lbl}</svg></div>
+  </div>
+  <div class="panel"><h3>ตามกลุ่ม</h3><div class="tbl" style="border:0"><table>
+    <tr><th>กลุ่ม</th><th>เครื่อง (online/ทั้งหมด)</th><th>เครื่องพิมพ์ที่ใช้ได้</th></tr>${grp}</table></div></div>`;
+},
+machines(){
+  const head=`<div style="margin-bottom:12px"><label><input type="checkbox" ${showAll?'checked':''} onchange="setShowAll(this.checked)"> แสดงเครื่องพิมพ์ที่ไม่ใช่ USB หรือออฟไลน์ด้วย</label></div>`;
+  if(!S.machines.length)return head+'<p class="mut">ยังไม่มีเครื่องเชื่อมต่อ — ใส่ที่อยู่ตัวควบคุมใน config ของเครื่องลูก แล้วเปิด agent</p>';
+  return head+S.machines.map(m=>{
+    const gopts=['<option value="">(ยังไม่จัดกลุ่ม)</option>'].concat(S.groups.map(g=>`<option value="${esc(g.id)}"${g.id===m.group?' selected':''}>${esc(g.name)}</option>`)).join('');
+    const all=m.printers||[];
+    const shown=all.filter(p=>showAll||(isUSB(p)&&isUp(p)));
+    const hidden=all.length-shown.length;
+    const prs=shown.map(p=>{
+      const shared=S.shares.some(x=>x.host===m.id&&x.real===p.name);
+      return `<tr><td>${esc(p.name)}</td><td>${esc(p.driver)}</td><td>${esc(p.port)}</td>
+        <td class="${p.status==='Normal'?'ok':'warn'}">${esc(p.status)}${p.jobs?` · คิว ${p.jobs}`:''}</td>
+        <td>${shared?'<span class="mut">แชร์แล้ว</span>':`<button data-m="${esc(m.id)}" data-p="${esc(p.name)}" onclick="shareIt(this)">แชร์</button>`}</td></tr>`;
+    }).join('')||`<tr><td colspan="5" class="mut">ไม่พบเครื่องพิมพ์ USB ที่ต่ออยู่${hidden?` (ซ่อนอีก ${hidden} รายการ)`:''}</td></tr>`;
+    const vs=Object.entries(m.virtuals||{}).map(([id,st])=>{
+      const sh=S.shares.find(x=>x.id===id);
+      return `<div><span class="${st==='ok'?'ok':'bad'}">●</span> ${esc(sh?sh.name:id)} — <span class="${st==='ok'?'ok':'bad'}">${st==='ok'?'พร้อมใช้':esc(st)}</span></div>`;
+    }).join('');
+    return `<div class="card">
+      <div class="hd"><b>${esc(m.hostname||m.id)}</b><span class="mut">${esc(m.id)} · ${esc(m.ip)}</span>
+        <span class="${m.online?'ok':'bad'}">${m.online?'● online':'● offline'}</span>
+        ${m.online?'':`<span class="mut">เห็นล่าสุด ${clock(m.last_seen)} · รายการเครื่องพิมพ์เป็นข้อมูลก่อนหน้านั้น</span>`}
+        <span class="grow"></span>
+        กลุ่ม <select data-m="${esc(m.id)}" onchange="setGroup(this)">${gopts}</select>
+        ${m.online?'':`<button onclick="if(confirm('ลบเครื่องนี้ออกจากระบบ?'))api('machine/delete',{id:'${esc(m.id)}'})">ลบ</button>`}
+      </div>
+      <table><tr><th>เครื่องพิมพ์ USB</th><th>ไดรเวอร์</th><th>พอร์ต</th><th>สถานะ</th><th></th></tr>${prs}</table>
+      ${hidden&&shown.length?`<div class="mut" style="padding:6px 16px">ซ่อนอีก ${hidden} รายการ (ไม่ใช่ USB หรือออฟไลน์)</div>`:''}
+      ${vs?`<div style="padding:10px 16px;border-top:1px solid var(--line)"><div class="mut" style="margin-bottom:4px">เครื่องพิมพ์ที่เครื่องนี้ใช้ได้</div>${vs}</div>`:''}
+      ${m.dup?`<div class="bad" style="padding:8px 16px">⚠ ${esc(m.dup)}</div>`:''}
+      ${!m.group?'<div class="warn" style="padding:8px 16px">⚠ ยังไม่อยู่ในกลุ่ม — ยังใช้/แชร์เครื่องพิมพ์ไม่ได้</div>':''}
+    </div>`;
+  }).join('');
+},
+groups(){
+  const cnt=g=>S.machines.filter(m=>m.group===g).length;
+  const un=S.machines.filter(m=>!m.group).length;
+  return `<div class="tbl"><table><tr><th>กลุ่ม</th><th>จำนวนเครื่อง</th><th>เครื่องพิมพ์ที่ใช้ได้</th><th></th></tr>`+
+    S.groups.map(g=>`<tr><td><b>${esc(g.name)}</b></td><td>${cnt(g.id)}</td>
+      <td>${esc(S.shares.filter(x=>x.allowed.includes(g.id)).map(x=>x.name).join(', ')||'-')}</td>
+      <td><button data-g="${esc(g.id)}" data-n="${esc(g.name)}" onclick="renameGroup(this)">เปลี่ยนชื่อ</button>
+          <button onclick="if(confirm('ลบกลุ่ม?'))api('group/delete',{id:'${esc(g.id)}'})">ลบ</button></td></tr>`).join('')+
+    `<tr><td class="mut">(ยังไม่จัดกลุ่ม)</td><td>${un}</td><td class="mut">ใช้/แชร์ไม่ได้</td><td></td></tr></table></div>`;
+},
+shares(){
+  if(!S.shares.length)return '<p class="mut">ยังไม่มีเครื่องพิมพ์ที่แชร์ — ไปแท็บ "เครื่อง" แล้วกดแชร์ที่เครื่องพิมพ์</p>';
+  return `<div class="tbl"><table><tr><th>ชื่อที่ผู้ใช้เห็น</th><th>เครื่องโฮสต์</th><th>เครื่องพิมพ์จริง</th><th>ไดรเวอร์ที่ผู้ใช้ต้องมี</th><th>กลุ่มที่ใช้ได้</th><th>เปิดใช้</th><th></th></tr>`+
+  S.shares.map(sh=>`<tr>
+    <td>${esc(sh.name)} <button data-s="${esc(sh.id)}" data-f="name" data-v="${esc(sh.name)}" onclick="editShare(this)">แก้</button></td>
+    <td>${esc(sh.host)} <span class="${sh.host_online?'ok':'bad'}">${sh.host_online?'●':'○ offline'}</span></td>
+    <td>${esc(sh.real)}<br><span class="${sh.health==='Normal'?'ok':'warn'}">${esc(sh.health)}</span></td>
+    <td>${esc(sh.driver||'(ยังไม่ระบุ)')} <button data-s="${esc(sh.id)}" data-f="driver" data-v="${esc(sh.driver)}" onclick="editShare(this)">แก้</button></td>
+    <td>${S.groups.map(g=>`<label><input type="checkbox" data-g="${esc(g.id)}" data-s="${esc(sh.id)}" ${sh.allowed.includes(g.id)?'checked':''} onchange="setAllowed(this)">${esc(g.name)}</label>`).join('')||'<span class="mut">ยังไม่มีกลุ่ม</span>'}</td>
+    <td><input type="checkbox" data-s="${esc(sh.id)}" ${sh.enabled?'checked':''} onchange="api('share/update',{id:this.dataset.s,enabled:this.checked})"></td>
+    <td><button onclick="if(confirm('ยกเลิกการแชร์? งานที่รออยู่จะถูกยกเลิก'))api('share/delete',{id:'${esc(sh.id)}'})">ยกเลิกแชร์</button></td></tr>`).join('')+'</table></div>';
+},
+traffic(){
+  const bad=j=>['error','rejected','expired'].includes(j.status);
+  const jobs=S.jobs.filter(j=>filter==='all'||(filter==='bad'&&bad(j))||(filter==='pending'&&j.status==='pending'));
+  const tl=j=>{let t=`รับเข้า ${clock(j.created)}`;if(j.sent)t+=` → ส่งให้โฮสต์ ${clock(j.sent)}`;
+    if(j.done)t+=` → ${j.status==='done'?'เสร็จ':'ผิดพลาด'} ${clock(j.done)} (${Math.round((new Date(j.done)-new Date(j.created))/1000)} วินาที)`;
+    if(j.attempts>1)t+=` · ส่งให้โฮสต์ ${j.attempts} ครั้ง`;return t;};
+  return `<div style="margin-bottom:10px">แสดง <select onchange="setFilter(this.value)">
+      <option value="all"${filter==='all'?' selected':''}>ทั้งหมด</option>
+      <option value="bad"${filter==='bad'?' selected':''}>มีปัญหา</option>
+      <option value="pending"${filter==='pending'?' selected':''}>รอพิมพ์</option></select>
+      <span class="mut">· งานรอเกิน ${S.ttl} นาทีจะถูกยกเลิกเอง · เนื้อหาสลากไม่ถูกเก็บหลังพิมพ์เสร็จ</span></div>`+
+  `<div class="tbl"><table><tr><th>เวลา</th><th>จาก</th><th>เครื่องพิมพ์</th><th>โฮสต์</th><th>ขนาด</th><th>สถานะ</th><th>รายละเอียด</th><th></th></tr>`+
+  (jobs.map(j=>{const [lb,cl]=ST[j.status]||[j.status,''];return `<tr><td>${clock(j.created)}</td><td>${esc(j.from)}</td><td>${esc(j.printer_name)}</td><td>${esc(j.host||'-')}</td>
+    <td>${(j.size/1024).toFixed(1)} KB</td><td class="${cl}">${lb}</td>
+    <td>${esc(j.error||j.hint||'')}<div class="tl">${tl(j)}</div></td>
+    <td>${j.status==='error'?`<button onclick="api('job/retry',{id:'${esc(j.id)}'})">พิมพ์ใหม่</button>`:''}
+        ${j.status==='pending'?`<button onclick="api('job/cancel',{id:'${esc(j.id)}'})">ยกเลิก</button>`:''}</td></tr>`}).join('')||'<tr><td colspan="8" class="mut">ไม่มีงาน</td></tr>')+'</table></div>';
+},
+log(){return '<pre>'+esc(S.log.join('\n'))+'</pre>';}
+};
+
+function render(){
+  if(!S)return;
+  $('nav').innerHTML=TABS.map(([k,l])=>`<a class="${k===tab?'on':''}" onclick="go('${k}')">${l}</a>`).join('');
+  $('alert').innerHTML=S.machines.filter(m=>m.dup).map(m=>`<div class="note">⚠ ${esc(m.dup)}</div>`).join('');
+  $('gform').style.display=tab==='groups'?'block':'none';
+  $('view').innerHTML=views[tab]();
+}
+async function load(force){
+  let r;try{r=await fetch('/admin/api/state');}catch(e){return;}
+  if(!r.ok)return;
+  const t=await r.text();
+  // ไม่นับ last_seen ในการเทียบ เพื่อไม่ให้หน้ารีเฟรชทุก 3 วินาที (dropdown ที่เปิดอยู่จะไม่ถูกปิด)
+  const key=JSON.stringify(JSON.parse(t),(k,v)=>k==='last_seen'?undefined:v);
+  if(!force&&key===last)return;
+  last=key;S=JSON.parse(t);render();
+}
+load(true);setInterval(load,3000);
+</script>
+</html>

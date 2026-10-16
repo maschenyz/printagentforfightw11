@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="th">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Print Agent</title>
+<style>
+body{font-family:"Segoe UI",Tahoma,sans-serif;margin:20px;background:#f4f5f7;color:#222;max-width:860px}
+h1{font-size:20px}h2{font-size:15px;margin:20px 0 6px}
+.box{background:#fff;border:1px solid #ddd;padding:12px 16px;font-size:14px;line-height:1.7}
+.dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:middle}
+table{border-collapse:collapse;width:100%;background:#fff}
+th,td{border:1px solid #ddd;padding:6px 10px;font-size:13px;text-align:left}
+th{background:#eee}
+.ok{color:#0a8a2a;font-weight:600}.bad{color:#c0392b;font-weight:600}.mut{color:#6b7788}
+button{cursor:pointer;border:1px solid #aab;background:#fff;border-radius:4px;padding:4px 14px;font-size:13px}
+button.pri{background:#1f6feb;color:#fff;border-color:#1f6feb}
+pre{background:#111;color:#ddd;padding:10px;font-size:12px;max-height:300px;overflow:auto}
+</style>
+<h1>🖨️ Print Agent</h1>
+<div class="box" id="box">กำลังโหลด...</div>
+<h2>เครื่องพิมพ์ที่ได้รับสิทธิ์ใช้งาน</h2>
+<p class="mut" id="hint"></p>
+<table id="offered"></table>
+<h2>Log</h2>
+<pre id="log"></pre>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function act(kind,profile){
+  if(kind==='disconnect'&&!confirm('ยกเลิกการเชื่อมต่อ? เครื่องพิมพ์นี้จะหายไปจากเครื่องนี้'))return;
+  const r=await fetch('/'+kind,{method:'POST',headers:{'X-Requested-With':'agent','Content-Type':'application/json'},body:JSON.stringify({profile})});
+  if(!r.ok)alert(await r.text());
+  load();
+}
+async function load(){
+  let s;try{s=await(await fetch('/status')).json();}catch(e){$('box').textContent='เชื่อมต่อ agent ไม่ได้';return;}
+  $('box').innerHTML=
+    `<span class="dot" style="background:${s.connected?'#0a8a2a':'#c0392b'}"></span><b>${s.connected?'เชื่อมต่อตัวควบคุมอยู่':'หลุดจากตัวควบคุม'}</b><br>
+     เครื่องนี้: ${esc(s.hostname)} (${esc(s.agent_id)})<br>
+     กลุ่ม: ${s.group?esc(s.group):'<span class="bad">ยังไม่ได้จัดกลุ่ม — ให้ admin จัดกลุ่มที่หน้าตัวควบคุม</span>'}<br>
+     ตัวควบคุมที่ใช้อยู่: ${esc(s.active_server||'ยังไม่ได้เชื่อม')}<br>
+     ที่อยู่ที่ตั้งไว้: ${esc(s.server_url)}<br>
+     ติดต่อสำเร็จล่าสุด: ${esc(s.last_ok)}${s.last_err?'<br><span class="bad">'+esc(s.last_err)+'</span>':''}<br>
+     งานรอส่งในเครื่อง: ${s.outbox}`;
+  $('hint').textContent=s.auto_connect
+    ?'เครื่องนี้ตั้งให้เชื่อมต่ออัตโนมัติ เครื่องพิมพ์ที่ได้สิทธิ์จะถูกเพิ่มให้เอง'
+    :'กด "เชื่อมต่อ" เพื่อเพิ่มเครื่องพิมพ์เข้าเครื่องนี้ (ต้องเปิด agent ด้วยสิทธิ์ Administrator)';
+  const V=s.offered||[];
+  $('offered').innerHTML='<tr><th>เครื่องพิมพ์</th><th>พอร์ต</th><th>สถานะ</th><th></th></tr>'+
+    (V.length?V.map(v=>{
+      const st=v.status==='ok'?'<span class="ok">พร้อมใช้</span>':v.connected?`<span class="bad">${esc(v.status)}</span>`:'<span class="mut">ยังไม่เชื่อมต่อ</span>';
+      const btn=v.connected
+        ?(s.auto_connect?'':`<button data-p="${esc(v.profile)}" onclick="act('disconnect',this.dataset.p)">ยกเลิกการเชื่อมต่อ</button>`)
+        :`<button class="pri" data-p="${esc(v.profile)}" onclick="act('connect',this.dataset.p)">เชื่อมต่อ</button>`;
+      return `<tr><td>${esc(v.name)}</td><td>${v.connected?'127.0.0.1:'+v.port:'-'}</td><td>${st}</td><td>${btn}</td></tr>`;
+    }).join(''):'<tr><td colspan="4" class="mut">ยังไม่มีเครื่องพิมพ์ที่ได้รับสิทธิ์ (ให้ admin จัดกลุ่มและแชร์เครื่องพิมพ์)</td></tr>');
+  $('log').textContent=s.log.join('\n');
+}
+load();setInterval(load,2000);
+</script>
+</html>
